@@ -49,7 +49,9 @@ const Portal = ({ to: tabPortal, ...rest }: PortalProps) => {
         }
       }
       if (!focused) {
-        event.currentTarget.blur();
+        document.body.tabIndex = 0;
+        document.body.focus();
+        document.body.tabIndex = -1;
       }
     },
     [contentRef, portalRef],
@@ -102,7 +104,9 @@ const Content = React.forwardRef<FocusableElement, ContentProps>(
           focused = focusAfter(tailRef.current!);
         }
         if (!focused) {
-          event.currentTarget.blur();
+          document.body.tabIndex = 0;
+          document.body.focus();
+          document.body.tabIndex = -1;
         }
       },
       [contentRef, portalRef],
@@ -126,7 +130,9 @@ const Content = React.forwardRef<FocusableElement, ContentProps>(
           focused = focusBefore(headRef.current!);
         }
         if (!focused) {
-          event.currentTarget.blur();
+          document.body.tabIndex = 0;
+          document.body.focus();
+          document.body.tabIndex = -1;
         }
       },
       [portalRef],
