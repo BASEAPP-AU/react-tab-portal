@@ -9,7 +9,7 @@ import pkg from './package.json' with { type: 'json' };
 export default [
   {
     input: 'src/index.ts',
-    external: ['react', 'tabbable'],
+    external: ['react', 'tabbable', 'react/jsx-runtime'],
     output: [
       { file: pkg.main, format: 'cjs', exports: 'named' },
       {
