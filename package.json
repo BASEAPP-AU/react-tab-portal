@@ -7,6 +7,7 @@
     "dist"
   ],
   "main": "dist/index.cjs.js",
+  "types": "dist/index.d.ts",
   "module": "dist/index.esm.js",
   "sideEffects": false,
   "scripts": {
@@ -67,6 +68,7 @@
     "react-dom": "^19.3.1",
     "rimraf": "^6.1.4",
     "rollup": "^4.68.4",
+    "rollup-plugin-dts": "^6.5.1",
     "tslib": "^2.9.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.73.0"

@@ -22,7 +22,7 @@ import type { FocusableElement } from 'tabbable';
 
 type PortalProps = JSX.IntrinsicAttributes & { to?: TabPortalContext };
 
-function Portal({ to: tabPortal, ...rest }: PortalProps) {
+const Portal = ({ to: tabPortal, ...rest }: PortalProps) => {
   const { contentRef, portalRef } = usePortalContext(tabPortal);
 
   const handleFocus = useCallback(
@@ -56,7 +56,7 @@ function Portal({ to: tabPortal, ...rest }: PortalProps) {
   );
 
   return <HiddenTabbable {...rest} ref={portalRef} onFocus={handleFocus} />;
-}
+};
 
 Portal.displayName = 'TabPortal.Portal';
 
