@@ -88,3 +88,5 @@ dist
 
 # TypeScript output
 types
+
+.rollup.cache

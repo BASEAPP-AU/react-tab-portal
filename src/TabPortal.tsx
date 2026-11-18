@@ -1,26 +1,32 @@
-import React, { useCallback, useContext, useRef } from 'react';
+import React, {
+  FocusEvent,
+  HTMLAttributes,
+  JSX,
+  PropsWithChildren,
+  useCallback,
+  useRef,
+} from 'react';
 import HiddenTabbable from './HiddenTabbable';
-import useTabPortal from './useTabPortal';
+import useTabPortal, {
+  PortalContext,
+  TabPortalContext,
+  usePortalContext,
+} from './useTabPortal';
 import {
   getTabbableNodes,
   focusBefore,
   focusAfter,
-  didMoveBackward
+  didMoveBackward,
 } from './utils';
+import type { FocusableElement } from 'tabbable';
 
-const Context = React.createContext();
+type PortalProps = JSX.IntrinsicAttributes & { to?: TabPortalContext };
 
-function Portal({ to: tabPortal, ...rest }) {
-  const context = useContext(Context);
-
-  if (!tabPortal) {
-    tabPortal = context;
-  }
-
-  const { contentRef, portalRef } = tabPortal;
+function Portal({ to: tabPortal, ...rest }: PortalProps) {
+  const { contentRef, portalRef } = usePortalContext(tabPortal);
 
   const handleFocus = useCallback(
-    event => {
+    (event: FocusEvent<FocusableElement>) => {
       event.stopPropagation();
       let focused = false;
       const contentNode = contentRef.current;
@@ -28,7 +34,7 @@ function Portal({ to: tabPortal, ...rest }) {
         const tabItems = getTabbableNodes(contentNode);
         const isMovingBackward = didMoveBackward(
           event.currentTarget,
-          event.relatedTarget
+          event.relatedTarget,
         );
         if (tabItems.length > 2) {
           const focusIndex = isMovingBackward ? tabItems.length - 2 : 1;
@@ -36,9 +42,9 @@ function Portal({ to: tabPortal, ...rest }) {
           focused = true;
         } else {
           if (isMovingBackward) {
-            focused = focusBefore(portalRef.current);
+            focused = focusBefore(portalRef.current!);
           } else {
-            focused = focusAfter(portalRef.current);
+            focused = focusAfter(portalRef.current!);
           }
         }
       }
@@ -46,7 +52,7 @@ function Portal({ to: tabPortal, ...rest }) {
         event.currentTarget.blur();
       }
     },
-    [contentRef, portalRef]
+    [contentRef, portalRef],
   );
 
   return <HiddenTabbable {...rest} ref={portalRef} onFocus={handleFocus} />;
@@ -54,7 +60,15 @@ function Portal({ to: tabPortal, ...rest }) {
 
 Portal.displayName = 'TabPortal.Portal';
 
-const Content = React.forwardRef(
+type ContentProps = PropsWithChildren<
+  HTMLAttributes<FocusableElement> & {
+    as?: keyof JSX.IntrinsicElements;
+    from?: TabPortalContext;
+    hiddenTabbableAs?: keyof JSX.IntrinsicElements;
+  }
+>;
+
+const Content = React.forwardRef<FocusableElement, ContentProps>(
   (
     {
       as: ElementType = 'div',
@@ -63,74 +77,64 @@ const Content = React.forwardRef(
       hiddenTabbableAs,
       ...rest
     },
-    inputRef
+    inputRef,
   ) => {
-    const headRef = useRef();
-    const tailRef = useRef();
-    const context = useContext(Context);
+    const headRef = useRef<FocusableElement>(null);
+    const tailRef = useRef<FocusableElement>(null);
 
-    if (!tabPortal) {
-      tabPortal = context;
-    }
-
-    const { contentRef, portalRef } = tabPortal;
+    const { contentRef, portalRef } = usePortalContext(tabPortal);
 
     const handleFocusHead = useCallback(
-      event => {
+      (event: FocusEvent<FocusableElement>) => {
         event.stopPropagation();
         let focused = false;
 
-        const contentNode = contentRef.current;
-        if (event.relatedTarget === tailRef.current) {
-          // FIXME: I can't remember the motivation for adding this particular
-          // branch. It made sense at the time.
-          focused = focusBefore(headRef.current);
-        } else if (
-          event.relatedTarget &&
-          contentNode.contains(event.relatedTarget)
-        ) {
+        const contentNode = contentRef.current!;
+        if (event.relatedTarget && contentNode.contains(event.relatedTarget)) {
           // If focus moved here from inside the content, we're moving backward
           // and should thus move focus back to the last tabbable element before
           // the portal.
-          focused = focusBefore(portalRef.current);
+          focused = focusBefore(portalRef.current!);
         } else {
           // Otherwise, it means we've tabbed forward from the last element
           // before the content, and we should skip to the first tabbable
           // element after the content.
-          focused = focusAfter(tailRef.current);
+          focused = focusAfter(tailRef.current!);
         }
         if (!focused) {
           event.currentTarget.blur();
         }
       },
-      [contentRef, portalRef]
+      [contentRef, portalRef],
     );
 
     const handleFocusTail = useCallback(
-      event => {
+      (event: FocusEvent<FocusableElement>) => {
         event.stopPropagation();
         let focused = false;
 
-        if (didMoveBackward(event.currentTarget, event.relatedTarget)) {
-          // If focus moved here from after this element in the document order,
-          // we're moving backward and should thus skip to the last tabbable
-          // element before the content.
-          focused = focusBefore(headRef.current);
-        } else {
-          // Otherwise, it means we've tabbed forward from inside the content,
-          // and we should move focus back to the first tabbable element after
+        const contentNode = contentRef.current!;
+        if (event.relatedTarget && contentNode.contains(event.relatedTarget)) {
+          // If focus moved here from inside the content, we're moving forward
+          // and should thus move focus back to the first tabbable element after
           // the portal.
-          focused = focusAfter(portalRef.current);
+          focused = focusAfter(portalRef.current!);
+        } else {
+          // Otherwise, it means we've tabbed backward from the first element
+          // after the content, and we should skip to the last tabbable
+          // element before the content.
+          focused = focusBefore(headRef.current!);
         }
         if (!focused) {
           event.currentTarget.blur();
         }
       },
-      [portalRef]
+      [portalRef],
     );
 
     const ref = useCallback(
-      node => {
+      (node: FocusableElement | null) => {
+        // eslint-disable-next-line
         contentRef.current = node;
         if (typeof inputRef === 'function') {
           inputRef(node);
@@ -138,7 +142,7 @@ const Content = React.forwardRef(
           inputRef.current = node;
         }
       },
-      [inputRef, contentRef]
+      [contentRef, inputRef],
     );
 
     return (
@@ -166,14 +170,16 @@ const Content = React.forwardRef(
         />
       </ElementType>
     );
-  }
+  },
 );
 
 Content.displayName = 'TabPortal.Content';
 
-function TabPortal({ children }) {
+function TabPortal({ children }: PropsWithChildren) {
   const value = useTabPortal();
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return (
+    <PortalContext.Provider value={value}>{children}</PortalContext.Provider>
+  );
 }
 
 TabPortal.Portal = Portal;

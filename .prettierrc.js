@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   proseWrap: 'always',
-  singleQuote: true
+  singleQuote: true,
 };

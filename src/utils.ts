@@ -1,10 +1,10 @@
-import tabbable from 'tabbable';
+import { FocusableElement, tabbable } from 'tabbable';
 
-export function getTabbableNodes(parentNode) {
+export function getTabbableNodes(parentNode: Element) {
   return tabbable(parentNode);
 }
 
-export function focusAfter(node) {
+export function focusAfter(node: FocusableElement) {
   const tabItems = getTabbableNodes(document.body);
   const nodeIndex = tabItems.indexOf(node);
   if (nodeIndex !== -1) {
@@ -18,7 +18,7 @@ export function focusAfter(node) {
   return false;
 }
 
-export function focusBefore(node) {
+export function focusBefore(node: FocusableElement) {
   const tabItems = getTabbableNodes(document.body);
   const nodeIndex = tabItems.indexOf(node);
   if (nodeIndex !== -1) {
@@ -32,11 +32,14 @@ export function focusBefore(node) {
   return false;
 }
 
-export function didMoveBackward(target, relatedTarget) {
+export function didMoveBackward(
+  target: Element,
+  relatedTarget: Element | null,
+) {
   return relatedTarget
     ? Boolean(
         target.compareDocumentPosition(relatedTarget) &
-          Node.DOCUMENT_POSITION_FOLLOWING
+        Node.DOCUMENT_POSITION_FOLLOWING,
       )
     : false;
 }
